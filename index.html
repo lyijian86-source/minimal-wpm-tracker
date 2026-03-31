@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WPM阅读测速</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">WPM Tracker</p>
+      <h1>WPM阅读测速</h1>
+      <p class="hero-copy">贴入文本，输入分钟和秒数，自动识别词数并记录对应轮次。统计、趋势和历史都按轮次独立展示。</p>
+    </header>
+
+    <section class="attempt-switch" aria-label="轮次切换">
+      <button type="button" class="attempt-tab active" data-attempt-tab="第一遍">第一遍</button>
+      <button type="button" class="attempt-tab" data-attempt-tab="第二遍">第二遍</button>
+      <button type="button" class="attempt-tab" data-attempt-tab="第三遍">第三遍</button>
+    </section>
+
+    <section class="panel input-panel">
+      <form id="record-form" class="record-form">
+        <label class="field field-full">
+          <span>阅读文本</span>
+          <textarea id="source-text" name="sourceText" rows="7" placeholder="粘贴英文阅读内容，系统会自动排除标点和特殊符号，只统计有效单词。" required></textarea>
+        </label>
+
+        <label class="field">
+          <span>记录轮次</span>
+          <select id="attempt" name="attempt">
+            <option value="第一遍">第一遍</option>
+            <option value="第二遍">第二遍</option>
+            <option value="第三遍">第三遍</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>分钟</span>
+          <input id="minutes" name="minutes" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
+        </label>
+
+        <label class="field">
+          <span>秒数</span>
+          <input id="seconds" name="seconds" type="number" min="0" max="59" step="1" inputmode="numeric" placeholder="00" required>
+        </label>
+
+        <div class="preview-card">
+          <div>
+            <p>识别词数</p>
+            <strong id="live-words">0</strong>
+          </div>
+          <div>
+            <p>自动 WPM</p>
+            <strong id="live-wpm">0</strong>
+          </div>
+        </div>
+
+        <button id="submit-button" type="submit" class="primary-btn" disabled>保存本次记录</button>
+      </form>
+    </section>
+
+    <section class="stats-grid">
+      <article class="panel stat-card">
+        <p>当前轮次</p>
+        <strong id="active-attempt-label">第一遍</strong>
+      </article>
+      <article class="panel stat-card">
+        <p>最近 7 次平均 WPM</p>
+        <strong id="avg-wpm">0</strong>
+      </article>
+      <article class="panel stat-card">
+        <p>本轮记录数</p>
+        <strong id="record-count">0</strong>
+      </article>
+    </section>
+
+    <section class="panel chart-panel">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">Trend</p>
+          <h2>WPM 变化</h2>
+        </div>
+        <p id="trend-caption" class="section-note">显示当前轮次的历史 WPM 变化</p>
+      </div>
+      <div id="chart-empty" class="chart-empty hidden">至少需要 1 条记录才能显示趋势。</div>
+      <svg id="trend-chart" class="trend-chart" viewBox="0 0 640 220" preserveAspectRatio="none" aria-label="WPM 趋势图"></svg>
+    </section>
+
+    <section class="panel history-panel">
+      <div class="history-header">
+        <div>
+          <p class="section-kicker">History</p>
+          <h2>当前轮次记录</h2>
+        </div>
+        <div id="undo-wrap" class="undo-wrap hidden">
+          <span>已删除 1 条记录</span>
+          <button id="undo-button" type="button" class="ghost-btn">撤销</button>
+        </div>
+      </div>
+
+      <ul id="record-list" class="record-list"></ul>
+      <div id="empty-state" class="empty-state">
+        <p>当前轮次还没有记录。</p>
+      </div>
+    </section>
+  </main>
+
+  <template id="record-item-template">
+    <li class="record-item">
+      <div class="record-meta">
+        <span class="attempt-badge"></span>
+        <span class="record-time"></span>
+      </div>
+      <div class="record-values">
+        <div>
+          <p>WPM</p>
+          <strong class="wpm-value"></strong>
+        </div>
+        <div>
+          <p>阅读词数</p>
+          <strong class="words-value"></strong>
+        </div>
+        <div>
+          <p>阅读时间</p>
+          <strong class="duration-value"></strong>
+        </div>
+      </div>
+      <button type="button" class="delete-btn">删除</button>
+    </li>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
