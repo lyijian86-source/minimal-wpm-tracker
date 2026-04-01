@@ -173,6 +173,7 @@
         </div>
         <div class="history-actions">
           <div class="backup-actions" aria-label="备份操作">
+            <button id="clear-history-button" type="button" class="subtle-btn">清空历史</button>
             <button id="export-button" type="button" class="subtle-btn">导出</button>
             <button id="import-button" type="button" class="subtle-btn">导入</button>
             <input id="import-file" type="file" accept="application/json,.json" class="hidden-file-input">
@@ -189,6 +190,26 @@
         <p>当前轮次还没有记录。</p>
       </div>
     </section>
+
+    <details id="trash-panel" class="panel trash-panel hidden">
+      <summary class="trash-summary">
+        <div>
+          <p class="section-kicker">Recycle Bin</p>
+          <h2>回收站</h2>
+        </div>
+        <span id="trash-count" class="trash-count">0</span>
+      </summary>
+      <div class="trash-body">
+        <div class="history-header">
+          <div class="trash-copy">已删除的记录会暂存在这里，可恢复或彻底清空。</div>
+          <div class="history-actions">
+            <button id="restore-all-button" type="button" class="subtle-btn">全部恢复</button>
+            <button id="empty-trash-button" type="button" class="subtle-btn danger-btn">清空全部</button>
+          </div>
+        </div>
+        <ul id="trash-list" class="record-list"></ul>
+      </div>
+    </details>
   </main>
 
   <template id="record-item-template">

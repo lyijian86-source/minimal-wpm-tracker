@@ -1,4 +1,5 @@
 const STORAGE_KEY = "wpm-reading-records";
+const TRASH_STORAGE_KEY = "wpm-reading-trash";
 const THEME_MODE_KEY = "wpm-theme-mode";
 const THEME_COLOR_KEY = "wpm-theme-color";
 const ATTEMPTS = ["第一遍", "第二遍", "第三遍"];
@@ -33,14 +34,21 @@ const recordList = document.getElementById("record-list");
 const emptyState = document.getElementById("empty-state");
 const undoWrap = document.getElementById("undo-wrap");
 const undoButton = document.getElementById("undo-button");
+const clearHistoryButton = document.getElementById("clear-history-button");
 const exportButton = document.getElementById("export-button");
 const importButton = document.getElementById("import-button");
 const importFileInput = document.getElementById("import-file");
+const trashPanel = document.getElementById("trash-panel");
+const trashList = document.getElementById("trash-list");
+const trashCount = document.getElementById("trash-count");
+const restoreAllButton = document.getElementById("restore-all-button");
+const emptyTrashButton = document.getElementById("empty-trash-button");
 const statusToast = document.getElementById("status-toast");
 const itemTemplate = document.getElementById("record-item-template");
 const attemptTabs = document.querySelectorAll("[data-attempt-tab]");
 
 let records = loadRecords();
+let trashRecords = loadTrashRecords();
 let deletedSnapshot = null;
 let activeAttempt = ATTEMPTS.includes(records[0]?.attempt) ? records[0].attempt : ATTEMPTS[0];
 let toastTimer = null;
@@ -48,6 +56,7 @@ let timeMode = "manual";
 let timerStartAt = 0;
 let timerElapsedMs = 0;
 let timerIntervalId = null;
+let timerHasStarted = false;
 let themeMode = THEME_MODES.includes(root.dataset.mode) ? root.dataset.mode : "dark";
 let themeColor = THEME_COLORS.includes(root.dataset.theme) ? root.dataset.theme : "green";
 
@@ -130,14 +139,19 @@ undoButton.addEventListener("click", () => {
   }
 
   records.splice(deletedSnapshot.index, 0, deletedSnapshot.record);
+  removeFromTrash(deletedSnapshot.record.id);
   deletedSnapshot = null;
   saveRecords();
+  saveTrashRecords();
   render();
 });
 
+clearHistoryButton.addEventListener("click", clearHistory);
 exportButton.addEventListener("click", exportRecords);
 importButton.addEventListener("click", () => importFileInput.click());
 importFileInput.addEventListener("change", importRecords);
+restoreAllButton.addEventListener("click", restoreAllTrash);
+emptyTrashButton.addEventListener("click", emptyTrash);
 
 function updateLiveMetrics() {
   const metrics = getCurrentMetrics();
@@ -256,6 +270,7 @@ function syncTimeModeUI() {
   timerStartButton.disabled = isTimerRunning();
   timerStopButton.disabled = !isTimerRunning();
   timerResetButton.disabled = timerModeActive ? getTimerElapsedMs() === 0 && !isTimerRunning() : false;
+  timerStartButton.textContent = timerHasStarted ? "继续" : "开始";
 }
 
 function startTimer() {
@@ -264,6 +279,7 @@ function startTimer() {
   }
 
   timeMode = "timer";
+  timerHasStarted = true;
   timerStartAt = performance.now() - timerElapsedMs;
   timerIntervalId = window.setInterval(() => {
     syncTimerInputsFromElapsed();
@@ -292,6 +308,7 @@ function resetTimer() {
 
   timerStartAt = 0;
   timerElapsedMs = 0;
+  timerHasStarted = false;
   timerDisplay.textContent = "00:00";
 
   if (timeMode === "timer") {
@@ -368,7 +385,24 @@ function isCountableWord(token) {
 }
 
 function loadRecords() {
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    const seeded = createSeedRecords();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+    return seeded;
+  }
+
   const raw = localStorage.getItem(STORAGE_KEY);
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadTrashRecords() {
+  const raw = localStorage.getItem(TRASH_STORAGE_KEY);
 
   if (!raw) {
     return [];
@@ -386,11 +420,16 @@ function saveRecords() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 }
 
+function saveTrashRecords() {
+  localStorage.setItem(TRASH_STORAGE_KEY, JSON.stringify(trashRecords));
+}
+
 function render() {
   syncAttemptControls();
   renderStats();
   renderTrend();
   renderList();
+  renderTrash();
   renderUndo();
 }
 
@@ -541,15 +580,135 @@ function deleteRecord(id) {
 
   const [removedRecord] = records.splice(index, 1);
   deletedSnapshot = { record: removedRecord, index };
+  moveToTrash([removedRecord]);
   saveRecords();
+  saveTrashRecords();
   render();
+}
+
+function clearHistory() {
+  if (records.length === 0) {
+    showStatusToast("没有可清空的历史记录");
+    return;
+  }
+
+  moveToTrash(records);
+  records = [];
+  deletedSnapshot = null;
+  saveRecords();
+  saveTrashRecords();
+  render();
+  showStatusToast("已清空历史记录");
+}
+
+function moveToTrash(items) {
+  const movedAt = new Date().toISOString();
+
+  items.forEach((record) => {
+    if (trashRecords.some((trashItem) => trashItem.id === record.id)) {
+      return;
+    }
+
+    trashRecords.unshift({
+      ...record,
+      deletedAt: movedAt
+    });
+  });
+}
+
+function removeFromTrash(id) {
+  trashRecords = trashRecords.filter((record) => record.id !== id);
+}
+
+function renderTrash() {
+  trashList.innerHTML = "";
+  trashPanel.classList.toggle("hidden", trashRecords.length === 0);
+  trashCount.textContent = `${trashRecords.length} 条`;
+  restoreAllButton.disabled = trashRecords.length === 0;
+  emptyTrashButton.disabled = trashRecords.length === 0;
+
+  trashRecords.forEach((record) => {
+    const item = document.createElement("li");
+    item.className = "record-item trash-item";
+
+    const deletedTime = record.deletedAt ? formatDate(record.deletedAt) : "";
+
+    item.innerHTML = `
+      <div class="record-meta">
+        <span class="attempt-badge">${record.attempt}</span>
+        <span class="record-time">删除于 ${deletedTime}</span>
+      </div>
+      <div class="record-values">
+        <div>
+          <p>WPM</p>
+          <strong>${formatAverage(record.wpm)}</strong>
+        </div>
+        <div>
+          <p>阅读词数</p>
+          <strong>${record.words}</strong>
+        </div>
+        <div>
+          <p>阅读时间</p>
+          <strong>${formatDuration(record.durationSeconds)}</strong>
+        </div>
+      </div>
+      <button type="button" class="ghost-btn restore-btn">恢复</button>
+    `;
+
+    item.querySelector(".restore-btn").addEventListener("click", () => restoreTrashRecord(record.id));
+    trashList.appendChild(item);
+  });
+}
+
+function restoreTrashRecord(id) {
+  const index = trashRecords.findIndex((record) => record.id === id);
+
+  if (index === -1) {
+    return;
+  }
+
+  const [restoredRecord] = trashRecords.splice(index, 1);
+  const { deletedAt, ...cleanRecord } = restoredRecord;
+  records.unshift(cleanRecord);
+  records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  saveRecords();
+  saveTrashRecords();
+  render();
+  showStatusToast("已从回收站恢复记录");
+}
+
+function restoreAllTrash() {
+  if (trashRecords.length === 0) {
+    return;
+  }
+
+  const restored = trashRecords.map(({ deletedAt, ...record }) => record);
+  records = [...restored, ...records].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  trashRecords = [];
+  saveRecords();
+  saveTrashRecords();
+  render();
+  showStatusToast("已恢复全部回收站记录");
+}
+
+function emptyTrash() {
+  if (trashRecords.length === 0) {
+    showStatusToast("回收站已经是空的");
+    return;
+  }
+
+  trashRecords = [];
+  saveTrashRecords();
+  render();
+  showStatusToast("已清空回收站");
 }
 
 function exportRecords() {
   const payload = {
     version: 1,
     exportedAt: new Date().toISOString(),
-    records
+    records,
+    trashRecords
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -576,9 +735,11 @@ async function importRecords(event) {
     const text = await file.text();
     const parsed = JSON.parse(text);
     const sourceRecords = Array.isArray(parsed) ? parsed : parsed.records;
+    const sourceTrashRecords = Array.isArray(parsed?.trashRecords) ? parsed.trashRecords : [];
     const importedRecords = sanitizeImportedRecords(sourceRecords);
+    const importedTrashRecords = sanitizeTrashRecords(sourceTrashRecords);
 
-    if (importedRecords.length === 0) {
+    if (importedRecords.length === 0 && importedTrashRecords.length === 0) {
       showStatusToast("未导入任何记录");
       return;
     }
@@ -595,8 +756,20 @@ async function importRecords(event) {
       }
     });
 
+    const existingTrashIds = new Set(trashRecords.map((record) => record.id));
+    const mergedTrash = [...trashRecords];
+
+    importedTrashRecords.forEach((record) => {
+      if (!existingIds.has(record.id) && !existingTrashIds.has(record.id)) {
+        mergedTrash.push(record);
+        existingTrashIds.add(record.id);
+      }
+    });
+
     records = mergedRecords.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    trashRecords = mergedTrash.sort((a, b) => new Date(b.deletedAt || b.createdAt) - new Date(a.deletedAt || a.createdAt));
     saveRecords();
+    saveTrashRecords();
     render();
     showStatusToast(addedCount > 0 ? `已导入 ${addedCount} 条记录` : "没有新增记录");
   } catch {
@@ -628,6 +801,17 @@ function sanitizeImportedRecords(sourceRecords) {
       && Number.isFinite(record.durationSeconds)
       && record.durationSeconds > 0
       && !Number.isNaN(Date.parse(record.createdAt)));
+}
+
+function sanitizeTrashRecords(sourceRecords) {
+  return sanitizeImportedRecords(sourceRecords)
+    .map((record, index) => ({
+      ...record,
+      deletedAt: Array.isArray(sourceRecords) && typeof sourceRecords[index]?.deletedAt === "string"
+        ? sourceRecords[index].deletedAt
+        : new Date().toISOString()
+    }))
+    .filter((record) => !Number.isNaN(Date.parse(record.deletedAt)));
 }
 
 function showStatusToast(message) {
@@ -681,4 +865,44 @@ function formatDuration(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}分 ${seconds}秒`;
+}
+
+function createSeedRecords() {
+  return [
+    createSeedRecord("第一遍", 228, 820, 216, "2026-03-12T08:10:00.000Z"),
+    createSeedRecord("第一遍", 241, 840, 209, "2026-03-14T08:25:00.000Z"),
+    createSeedRecord("第一遍", 259, 860, 199, "2026-03-16T08:40:00.000Z"),
+    createSeedRecord("第一遍", 278, 880, 190, "2026-03-18T08:55:00.000Z"),
+    createSeedRecord("第一遍", 301, 900, 179, "2026-03-20T09:10:00.000Z"),
+    createSeedRecord("第一遍", 326, 920, 169, "2026-03-23T09:05:00.000Z"),
+    createSeedRecord("第一遍", 354, 940, 159, "2026-03-26T08:50:00.000Z"),
+    createSeedRecord("第一遍", 389, 960, 148, "2026-03-29T08:35:00.000Z"),
+    createSeedRecord("第二遍", 276, 820, 178, "2026-03-12T18:20:00.000Z"),
+    createSeedRecord("第二遍", 296, 840, 170, "2026-03-14T18:35:00.000Z"),
+    createSeedRecord("第二遍", 321, 860, 161, "2026-03-16T18:50:00.000Z"),
+    createSeedRecord("第二遍", 349, 880, 151, "2026-03-18T19:05:00.000Z"),
+    createSeedRecord("第二遍", 381, 900, 142, "2026-03-20T19:20:00.000Z"),
+    createSeedRecord("第二遍", 416, 920, 133, "2026-03-23T19:10:00.000Z"),
+    createSeedRecord("第二遍", 454, 940, 124, "2026-03-26T18:55:00.000Z"),
+    createSeedRecord("第二遍", 498, 960, 116, "2026-03-29T18:40:00.000Z"),
+    createSeedRecord("第三遍", 332, 820, 148, "2026-03-13T07:30:00.000Z"),
+    createSeedRecord("第三遍", 358, 840, 141, "2026-03-15T07:42:00.000Z"),
+    createSeedRecord("第三遍", 389, 860, 133, "2026-03-17T07:54:00.000Z"),
+    createSeedRecord("第三遍", 425, 880, 124, "2026-03-19T08:06:00.000Z"),
+    createSeedRecord("第三遍", 466, 900, 116, "2026-03-21T08:18:00.000Z"),
+    createSeedRecord("第三遍", 512, 920, 108, "2026-03-24T08:10:00.000Z"),
+    createSeedRecord("第三遍", 563, 940, 100, "2026-03-27T07:58:00.000Z"),
+    createSeedRecord("第三遍", 621, 960, 93, "2026-03-30T07:45:00.000Z")
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function createSeedRecord(attempt, wpm, words, durationSeconds, createdAt) {
+  return {
+    id: `seed-${attempt}-${createdAt}`,
+    attempt,
+    wpm,
+    words,
+    durationSeconds,
+    createdAt
+  };
 }
