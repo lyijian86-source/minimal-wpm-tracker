@@ -78,6 +78,24 @@ body::before {
   font-weight: 400;
 }
 
+.status-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(11, 12, 15, 0.56);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.86rem;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
 .attempt-switch {
   display: inline-grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -93,7 +111,8 @@ body::before {
 .attempt-tab,
 .primary-btn,
 .ghost-btn,
-.delete-btn {
+.delete-btn,
+.subtle-btn {
   border: 0;
   border-radius: 12px;
   font: inherit;
@@ -126,14 +145,14 @@ body::before {
 .chart-panel,
 .history-panel,
 .stat-card {
-  padding: 20px;
+  padding: 22px;
 }
 
 .record-form {
   display: grid;
-  grid-template-columns: 1.4fr repeat(3, minmax(0, 0.6fr)) 1fr;
-  gap: 12px;
-  align-items: end;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.92fr);
+  gap: 18px;
+  align-items: stretch;
 }
 
 .field {
@@ -141,13 +160,122 @@ body::before {
   gap: 8px;
 }
 
-.field-full {
-  grid-column: 1 / -1;
-}
-
 .field span {
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.section-label {
+  color: var(--accent);
+  font-size: 0.73rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.editor-panel,
+.control-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.editor-panel {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(10, 11, 14, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+.control-panel {
+  align-content: start;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(10, 11, 14, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+.text-field {
+  height: 100%;
+  align-content: start;
+  gap: 0;
+}
+
+.time-field-muted span {
+  opacity: 0.72;
+}
+
+.time-mode-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(11, 12, 15, 0.58);
+  border: 1px solid var(--border);
+}
+
+.time-block {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.manual-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mode-btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 12px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.mode-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.timer-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(8, 9, 12, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.timer-readout p {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.timer-readout strong {
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.timer-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timer-btn {
+  padding: 9px 12px;
 }
 
 .field input,
@@ -166,8 +294,18 @@ body::before {
 
 .field textarea {
   resize: vertical;
-  min-height: 160px;
-  line-height: 1.65;
+  min-height: 340px;
+  line-height: 1.7;
+  height: 100%;
+  padding: 20px 20px 22px;
+  border-color: rgba(255, 255, 255, 0.035);
+  background: rgba(17, 19, 23, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.field input.is-readonly {
+  color: var(--muted);
+  background: rgba(20, 22, 26, 0.66);
 }
 
 .field input:focus,
@@ -190,10 +328,10 @@ body::before {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(11, 12, 15, 0.58);
-  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(215, 184, 122, 0.08), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(215, 184, 122, 0.1);
 }
 
 .preview-card p,
@@ -211,16 +349,19 @@ body::before {
 
 .primary-btn,
 .ghost-btn,
-.delete-btn {
+.delete-btn,
+.subtle-btn {
   cursor: pointer;
   transition: opacity 0.18s ease, background 0.18s ease;
 }
 
 .primary-btn {
-  padding: 14px 18px;
+  width: 100%;
+  padding: 15px 18px;
   background: var(--accent);
   color: #19150f;
   font-weight: 500;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .primary-btn:disabled {
@@ -252,6 +393,18 @@ body::before {
   gap: 14px;
   align-items: flex-end;
   margin-bottom: 16px;
+}
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backup-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .chart-empty,
@@ -306,6 +459,35 @@ body::before {
   padding: 8px 12px;
   background: transparent;
   color: var(--accent);
+}
+
+.subtle-btn {
+  padding: 6px 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.subtle-btn:hover {
+  color: var(--text);
+}
+
+.subtle-btn:disabled,
+.mode-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hidden-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .record-list {
@@ -377,6 +559,19 @@ body::before {
   .record-values {
     grid-template-columns: 1fr;
   }
+
+  .field textarea {
+    min-height: 240px;
+  }
+
+  .timer-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .manual-time-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {
@@ -400,7 +595,33 @@ body::before {
     align-items: flex-start;
   }
 
+  .history-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .editor-panel,
+  .control-panel {
+    padding: 16px;
+  }
+
   .preview-card {
     grid-template-columns: 1fr;
+  }
+
+  .status-toast {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .time-mode-switch,
+  .timer-actions {
+    width: 100%;
+  }
+
+  .timer-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

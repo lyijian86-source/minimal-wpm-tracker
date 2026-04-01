@@ -16,6 +16,7 @@
       <h1>WPM阅读测速</h1>
       <p class="hero-copy">贴入文本，输入分钟和秒数，自动识别词数并记录对应轮次。统计、趋势和历史都按轮次独立展示。</p>
     </header>
+    <div id="status-toast" class="status-toast hidden" aria-live="polite"></div>
 
     <section class="attempt-switch" aria-label="轮次切换">
       <button type="button" class="attempt-tab active" data-attempt-tab="第一遍">第一遍</button>
@@ -25,42 +26,69 @@
 
     <section class="panel input-panel">
       <form id="record-form" class="record-form">
-        <label class="field field-full">
-          <span>阅读文本</span>
-          <textarea id="source-text" name="sourceText" rows="7" placeholder="粘贴英文阅读内容，系统会自动排除标点和特殊符号，只统计有效单词。" required></textarea>
-        </label>
-
-        <label class="field">
-          <span>记录轮次</span>
-          <select id="attempt" name="attempt">
-            <option value="第一遍">第一遍</option>
-            <option value="第二遍">第二遍</option>
-            <option value="第三遍">第三遍</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>分钟</span>
-          <input id="minutes" name="minutes" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
-        </label>
-
-        <label class="field">
-          <span>秒数</span>
-          <input id="seconds" name="seconds" type="number" min="0" max="59" step="1" inputmode="numeric" placeholder="00" required>
-        </label>
-
-        <div class="preview-card">
-          <div>
-            <p>识别词数</p>
-            <strong id="live-words">0</strong>
-          </div>
-          <div>
-            <p>自动 WPM</p>
-            <strong id="live-wpm">0</strong>
-          </div>
+        <div class="editor-panel">
+          <div class="section-label">Text</div>
+          <label class="field text-field">
+            <textarea id="source-text" name="sourceText" rows="7" placeholder="粘贴英文阅读内容，系统会自动排除标点和特殊符号，只统计有效单词。" required></textarea>
+          </label>
         </div>
 
-        <button id="submit-button" type="submit" class="primary-btn" disabled>保存本次记录</button>
+        <div class="control-panel">
+          <div class="section-label">Controls</div>
+
+          <label class="field">
+            <span>记录轮次</span>
+            <select id="attempt" name="attempt">
+              <option value="第一遍">第一遍</option>
+              <option value="第二遍">第二遍</option>
+              <option value="第三遍">第三遍</option>
+            </select>
+          </label>
+
+          <div class="time-block">
+            <div class="time-mode-switch" aria-label="时间录入方式">
+              <button type="button" class="mode-btn active" data-time-mode="manual">手动输入</button>
+              <button type="button" class="mode-btn" data-time-mode="timer">自动计时</button>
+            </div>
+
+            <div id="timer-panel" class="timer-panel hidden">
+              <div class="timer-readout">
+                <p>计时器</p>
+                <strong id="timer-display">00:00</strong>
+              </div>
+              <div class="timer-actions">
+                <button id="timer-start" type="button" class="subtle-btn timer-btn">开始</button>
+                <button id="timer-stop" type="button" class="subtle-btn timer-btn" disabled>暂停</button>
+                <button id="timer-reset" type="button" class="subtle-btn timer-btn">重置</button>
+              </div>
+            </div>
+
+            <div class="manual-time-grid">
+              <label class="field">
+                <span>分钟</span>
+                <input id="minutes" name="minutes" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
+              </label>
+
+              <label class="field">
+                <span>秒数</span>
+                <input id="seconds" name="seconds" type="number" min="0" max="59" step="1" inputmode="numeric" placeholder="00" required>
+              </label>
+            </div>
+          </div>
+
+          <div class="preview-card">
+            <div>
+              <p>识别词数</p>
+              <strong id="live-words">0</strong>
+            </div>
+            <div>
+              <p>自动 WPM</p>
+              <strong id="live-wpm">0</strong>
+            </div>
+          </div>
+
+          <button id="submit-button" type="submit" class="primary-btn" disabled>保存本次记录</button>
+        </div>
       </form>
     </section>
 
@@ -97,9 +125,16 @@
           <p class="section-kicker">History</p>
           <h2>当前轮次记录</h2>
         </div>
-        <div id="undo-wrap" class="undo-wrap hidden">
-          <span>已删除 1 条记录</span>
-          <button id="undo-button" type="button" class="ghost-btn">撤销</button>
+        <div class="history-actions">
+          <div class="backup-actions" aria-label="备份操作">
+            <button id="export-button" type="button" class="subtle-btn">导出</button>
+            <button id="import-button" type="button" class="subtle-btn">导入</button>
+            <input id="import-file" type="file" accept="application/json,.json" class="hidden-file-input">
+          </div>
+          <div id="undo-wrap" class="undo-wrap hidden">
+            <span>已删除 1 条记录</span>
+            <button id="undo-button" type="button" class="ghost-btn">撤销</button>
+          </div>
         </div>
       </div>
 
