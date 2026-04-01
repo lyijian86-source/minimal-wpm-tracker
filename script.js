@@ -1,11 +1,18 @@
 const STORAGE_KEY = "wpm-reading-records";
+const THEME_MODE_KEY = "wpm-theme-mode";
+const THEME_COLOR_KEY = "wpm-theme-color";
 const ATTEMPTS = ["第一遍", "第二遍", "第三遍"];
+const THEME_MODES = ["light", "dark"];
+const THEME_COLORS = ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "graphite"];
 
 const form = document.getElementById("record-form");
+const root = document.documentElement;
 const attemptInput = document.getElementById("attempt");
 const sourceTextInput = document.getElementById("source-text");
 const minutesInput = document.getElementById("minutes");
 const secondsInput = document.getElementById("seconds");
+const modeToggleButtons = document.querySelectorAll("[data-mode-option]");
+const themeSwatchButtons = document.querySelectorAll("[data-theme-option]");
 const timeModeButtons = document.querySelectorAll("[data-time-mode]");
 const timerPanel = document.getElementById("timer-panel");
 const manualTimeGrid = document.querySelector(".manual-time-grid");
@@ -41,7 +48,10 @@ let timeMode = "manual";
 let timerStartAt = 0;
 let timerElapsedMs = 0;
 let timerIntervalId = null;
+let themeMode = THEME_MODES.includes(root.dataset.mode) ? root.dataset.mode : "dark";
+let themeColor = THEME_COLORS.includes(root.dataset.theme) ? root.dataset.theme : "green";
 
+applyThemePreferences();
 render();
 updateLiveMetrics();
 
@@ -59,6 +69,18 @@ attemptTabs.forEach((button) => {
     activeAttempt = button.dataset.attemptTab;
     attemptInput.value = activeAttempt;
     render();
+  });
+});
+
+modeToggleButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setThemeMode(button.dataset.modeOption);
+  });
+});
+
+themeSwatchButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setThemeColor(button.dataset.themeOption);
   });
 });
 
@@ -124,6 +146,48 @@ function updateLiveMetrics() {
   liveWpm.textContent = metrics.words > 0 && metrics.totalSeconds > 0 ? formatAverage(metrics.wpm) : "0";
   submitButton.disabled = !metrics.isValid;
   syncTimeModeUI();
+}
+
+function applyThemePreferences() {
+  root.dataset.mode = themeMode;
+  root.dataset.theme = themeColor;
+  syncThemeControls();
+}
+
+function setThemeMode(nextMode) {
+  if (!THEME_MODES.includes(nextMode) || nextMode === themeMode) {
+    syncThemeControls();
+    return;
+  }
+
+  themeMode = nextMode;
+  localStorage.setItem(THEME_MODE_KEY, themeMode);
+  applyThemePreferences();
+}
+
+function setThemeColor(nextTheme) {
+  if (!THEME_COLORS.includes(nextTheme) || nextTheme === themeColor) {
+    syncThemeControls();
+    return;
+  }
+
+  themeColor = nextTheme;
+  localStorage.setItem(THEME_COLOR_KEY, themeColor);
+  applyThemePreferences();
+}
+
+function syncThemeControls() {
+  modeToggleButtons.forEach((button) => {
+    const selected = button.dataset.modeOption === themeMode;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+
+  themeSwatchButtons.forEach((button) => {
+    const selected = button.dataset.themeOption === themeColor;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
 }
 
 function getCurrentMetrics() {
