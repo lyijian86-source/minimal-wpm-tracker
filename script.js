@@ -56,6 +56,8 @@ const emptyTrashButton = document.getElementById("empty-trash-button");
 const installAppButton = document.getElementById("install-app-button");
 const installAppCopy = document.getElementById("install-app-copy");
 const statusToast = document.getElementById("status-toast");
+const updateToast = document.getElementById("update-toast");
+const updateToastButton = document.getElementById("update-toast-button");
 const itemTemplate = document.getElementById("record-item-template");
 const attemptSwitch = document.getElementById("attempt-switch");
 const addAttemptButton = document.getElementById("add-attempt-button");
@@ -75,6 +77,8 @@ let timerHasStarted = false;
 let themeMode = THEME_MODES.includes(root.dataset.mode) ? root.dataset.mode : "dark";
 let themeColor = THEME_COLORS.includes(root.dataset.theme) ? root.dataset.theme : "green";
 let deferredInstallPrompt = null;
+let waitingServiceWorker = null;
+let isRefreshingForUpdate = false;
 
 applyThemePreferences();
 registerOfflineSupport();
@@ -1000,9 +1004,40 @@ function registerOfflineSupport() {
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(() => {
+      navigator.serviceWorker.register("./sw.js").then((registration) => {
+        if (registration.waiting) {
+          promptAppUpdate(registration.waiting);
+        }
+
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration.installing;
+
+          if (!newWorker) {
+            return;
+          }
+
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              promptAppUpdate(newWorker);
+            }
+          });
+        });
+
+        window.setTimeout(() => {
+          registration.update().catch(() => {});
+        }, 1500);
+      }).catch(() => {
         // Keep silent. The app still works online if registration fails.
       });
+    });
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (isRefreshingForUpdate) {
+        return;
+      }
+
+      isRefreshingForUpdate = true;
+      window.location.reload();
     });
   }
 
@@ -1019,6 +1054,20 @@ function registerOfflineSupport() {
   });
 
   syncInstallUI("idle");
+}
+
+function promptAppUpdate(worker) {
+  waitingServiceWorker = worker;
+  updateToast.classList.remove("hidden");
+}
+
+function applyAppUpdate() {
+  if (!waitingServiceWorker) {
+    updateToast.classList.add("hidden");
+    return;
+  }
+
+  waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
 }
 
 async function installOfflineApp() {
@@ -1043,6 +1092,8 @@ async function installOfflineApp() {
 
   showStatusToast("如需离线使用，可在浏览器菜单中选择“安装应用”或“添加到主屏幕”");
 }
+
+updateToastButton.addEventListener("click", applyAppUpdate);
 
 function syncInstallUI(state) {
   if (!installAppButton || !installAppCopy) {

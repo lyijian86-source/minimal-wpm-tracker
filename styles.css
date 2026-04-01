@@ -228,6 +228,24 @@ body::before {
   box-shadow: var(--shadow-soft);
 }
 
+.update-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 72px;
+  z-index: 31;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--panel) 90%, var(--theme-soft));
+  border: 1px solid color-mix(in srgb, var(--border) 78%, var(--accent) 22%);
+  color: var(--text);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-soft);
+}
+
 .settings-entry {
   position: relative;
 }
@@ -1036,5 +1054,12 @@ body::before {
   .status-toast {
     right: 12px;
     bottom: 12px;
+  }
+
+  .update-toast {
+    right: 12px;
+    bottom: 60px;
+    left: 12px;
+    justify-content: space-between;
   }
 }
