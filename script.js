@@ -43,6 +43,8 @@ const trashList = document.getElementById("trash-list");
 const trashCount = document.getElementById("trash-count");
 const restoreAllButton = document.getElementById("restore-all-button");
 const emptyTrashButton = document.getElementById("empty-trash-button");
+const installAppButton = document.getElementById("install-app-button");
+const installAppCopy = document.getElementById("install-app-copy");
 const statusToast = document.getElementById("status-toast");
 const itemTemplate = document.getElementById("record-item-template");
 const attemptTabs = document.querySelectorAll("[data-attempt-tab]");
@@ -59,8 +61,10 @@ let timerIntervalId = null;
 let timerHasStarted = false;
 let themeMode = THEME_MODES.includes(root.dataset.mode) ? root.dataset.mode : "dark";
 let themeColor = THEME_COLORS.includes(root.dataset.theme) ? root.dataset.theme : "green";
+let deferredInstallPrompt = null;
 
 applyThemePreferences();
+registerOfflineSupport();
 render();
 updateLiveMetrics();
 
@@ -152,6 +156,7 @@ importButton.addEventListener("click", () => importFileInput.click());
 importFileInput.addEventListener("change", importRecords);
 restoreAllButton.addEventListener("click", restoreAllTrash);
 emptyTrashButton.addEventListener("click", emptyTrash);
+installAppButton.addEventListener("click", installOfflineApp);
 
 function updateLiveMetrics() {
   const metrics = getCurrentMetrics();
@@ -826,6 +831,81 @@ function showStatusToast(message) {
     statusToast.classList.add("hidden");
     toastTimer = null;
   }, 2600);
+}
+
+function registerOfflineSupport() {
+  if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
+    syncInstallUI("installed");
+  }
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {
+        // Keep silent. The app still works online if registration fails.
+      });
+    });
+  }
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    syncInstallUI("ready");
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    syncInstallUI("installed");
+    showStatusToast("离线版已安装到设备");
+  });
+
+  syncInstallUI("idle");
+}
+
+async function installOfflineApp() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const result = await deferredInstallPrompt.userChoice.catch(() => null);
+
+    if (result?.outcome === "accepted") {
+      syncInstallUI("installed");
+      showStatusToast("安装请求已提交");
+    }
+
+    deferredInstallPrompt = null;
+    return;
+  }
+
+  if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
+    syncInstallUI("installed");
+    showStatusToast("离线版已经可直接打开");
+    return;
+  }
+
+  showStatusToast("如需离线使用，可在浏览器菜单中选择“安装应用”或“添加到主屏幕”");
+}
+
+function syncInstallUI(state) {
+  if (!installAppButton || !installAppCopy) {
+    return;
+  }
+
+  if (state === "installed") {
+    installAppButton.textContent = "已安装";
+    installAppButton.disabled = true;
+    installAppCopy.textContent = "这个工具已经可以像本地应用一样打开，历史记录仍会保存在当前设备。";
+    return;
+  }
+
+  if (state === "ready") {
+    installAppButton.textContent = "安装离线版";
+    installAppButton.disabled = false;
+    installAppCopy.textContent = "当前浏览器支持安装，保存到桌面或主屏后可离线继续使用。";
+    return;
+  }
+
+  installAppButton.textContent = "安装离线版";
+  installAppButton.disabled = false;
+  installAppCopy.textContent = "打开一次后可保存到桌面或主屏，后续离线也能继续使用。";
 }
 
 function formatStopwatch(totalSeconds) {

@@ -1,0 +1,25 @@
+{
+  "name": "WPM阅读测速",
+  "short_name": "WPM测速",
+  "description": "用于记录阅读速度、趋势和多轮次表现的离线 WPM 工具。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101615",
+  "theme_color": "#17352b",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

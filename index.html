@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WPM阅读测速</title>
+  <meta name="theme-color" content="#17352b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WPM阅读测速">
   <script>
     (function () {
       var modeKey = "wpm-theme-mode";
@@ -17,6 +21,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -54,6 +61,11 @@
                 <button type="button" class="theme-swatch" data-theme-option="purple" aria-label="紫" title="紫"><span>紫</span></button>
                 <button type="button" class="theme-swatch" data-theme-option="graphite" aria-label="石墨" title="石墨"><span>石</span></button>
               </div>
+            </div>
+            <div class="theme-group theme-card install-card">
+              <p class="theme-label">Offline</p>
+              <button id="install-app-button" type="button" class="subtle-btn install-btn">安装离线版</button>
+              <p id="install-app-copy" class="theme-panel-copy">打开一次后可保存到桌面或主屏，后续离线也能继续使用。</p>
             </div>
           </section>
         </details>

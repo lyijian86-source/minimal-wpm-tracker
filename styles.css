@@ -313,6 +313,24 @@ body::before {
   font-size: 0.92rem;
 }
 
+.install-card {
+  align-content: start;
+}
+
+.install-btn {
+  justify-self: start;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel-deep) 84%, var(--accent-soft));
+  border: 1px solid color-mix(in srgb, var(--border) 78%, var(--accent) 22%);
+  color: var(--text);
+}
+
+.install-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--border-strong) 62%, var(--accent) 38%);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-soft) 20%, transparent);
+}
+
 .theme-group-colors {
   justify-items: end;
 }
