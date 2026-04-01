@@ -1,14 +1,14 @@
 :root {
   color-scheme: dark;
-  --bg: #08090b;
-  --panel: rgba(16, 17, 20, 0.9);
-  --panel-2: rgba(20, 22, 26, 0.94);
-  --border: rgba(220, 208, 182, 0.07);
-  --text: #f5f1e8;
-  --muted: #9d978d;
-  --accent: #d7b87a;
-  --accent-soft: rgba(215, 184, 122, 0.12);
-  --danger: #d98c8c;
+  --bg: #06100d;
+  --panel: rgba(10, 23, 19, 0.9);
+  --panel-2: rgba(14, 30, 25, 0.94);
+  --border: rgba(152, 191, 173, 0.09);
+  --text: #edf5f0;
+  --muted: #91a79c;
+  --accent: #79b59b;
+  --accent-soft: rgba(121, 181, 155, 0.14);
+  --danger: #d89090;
 }
 
 * {
@@ -28,8 +28,8 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at top left, rgba(215, 184, 122, 0.08), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(111, 123, 139, 0.08), transparent 26%);
+    radial-gradient(circle at top left, rgba(70, 128, 102, 0.16), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(146, 181, 162, 0.08), transparent 28%);
   pointer-events: none;
 }
 
@@ -129,7 +129,7 @@ body::before {
 
 .attempt-tab.active {
   background: var(--accent);
-  color: #19150f;
+  color: #08130f;
   font-weight: 500;
 }
 
@@ -182,16 +182,16 @@ body::before {
 .editor-panel {
   padding: 18px;
   border-radius: 20px;
-  background: rgba(10, 11, 14, 0.46);
-  border: 1px solid rgba(255, 255, 255, 0.035);
+  background: rgba(8, 19, 16, 0.5);
+  border: 1px solid rgba(173, 214, 193, 0.06);
 }
 
 .control-panel {
   align-content: start;
   padding: 18px;
   border-radius: 20px;
-  background: rgba(10, 11, 14, 0.46);
-  border: 1px solid rgba(255, 255, 255, 0.035);
+  background: rgba(8, 19, 16, 0.5);
+  border: 1px solid rgba(173, 214, 193, 0.06);
 }
 
 .text-field {
@@ -210,7 +210,7 @@ body::before {
   gap: 6px;
   padding: 6px;
   border-radius: 14px;
-  background: rgba(11, 12, 15, 0.58);
+  background: rgba(8, 19, 16, 0.62);
   border: 1px solid var(--border);
 }
 
@@ -219,8 +219,8 @@ body::before {
   gap: 10px;
   padding: 14px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(173, 214, 193, 0.06);
 }
 
 .manual-time-grid {
@@ -252,8 +252,8 @@ body::before {
   gap: 16px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: rgba(8, 9, 12, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(5, 15, 12, 0.76);
+  border: 1px solid rgba(173, 214, 193, 0.05);
 }
 
 .timer-readout p {
@@ -298,9 +298,9 @@ body::before {
   line-height: 1.7;
   height: 100%;
   padding: 20px 20px 22px;
-  border-color: rgba(255, 255, 255, 0.035);
-  background: rgba(17, 19, 23, 0.9);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  border-color: rgba(173, 214, 193, 0.05);
+  background: linear-gradient(180deg, rgba(14, 30, 25, 0.92), rgba(11, 24, 20, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .field input.is-readonly {
@@ -311,7 +311,7 @@ body::before {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  border-color: rgba(215, 184, 122, 0.38);
+  border-color: rgba(121, 181, 155, 0.42);
 }
 
 .field select {
@@ -330,8 +330,8 @@ body::before {
   gap: 10px;
   padding: 16px;
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(215, 184, 122, 0.08), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(215, 184, 122, 0.1);
+  background: linear-gradient(180deg, rgba(121, 181, 155, 0.12), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(121, 181, 155, 0.12);
 }
 
 .preview-card p,
@@ -359,7 +359,7 @@ body::before {
   width: 100%;
   padding: 15px 18px;
   background: var(--accent);
-  color: #19150f;
+  color: #08130f;
   font-weight: 500;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
@@ -422,7 +422,7 @@ body::before {
 }
 
 .trend-area {
-  fill: rgba(215, 184, 122, 0.12);
+  fill: rgba(121, 181, 155, 0.14);
 }
 
 .trend-line {
