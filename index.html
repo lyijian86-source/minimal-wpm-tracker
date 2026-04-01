@@ -22,39 +22,79 @@
 <body>
   <main class="app-shell">
     <header class="hero">
-      <p class="eyebrow">WPM Tracker</p>
-      <h1>WPM阅读测速</h1>
-      <p class="hero-copy">贴入文本，输入分钟和秒数，自动识别词数并记录对应轮次。统计、趋势和历史都按轮次独立展示。</p>
+      <div class="hero-main">
+        <p class="eyebrow">WPM Tracker</p>
+        <h1>WPM阅读测速</h1>
+      </div>
+      <div class="hero-side">
+        <p class="hero-copy">贴入文本，输入分钟和秒数，自动识别词数并记录对应轮次。统计、趋势和历史都按轮次独立展示。</p>
+        <details class="settings-entry">
+          <summary class="settings-trigger">设置</summary>
+          <section class="theme-panel panel" aria-label="主题设置">
+            <div class="theme-panel-head">
+              <p class="theme-panel-kicker">Interface</p>
+              <p class="theme-panel-copy">切换明暗模式与主题色，让整个工具界面保持一致的产品气质。</p>
+            </div>
+            <div class="theme-group theme-card">
+              <p class="theme-label">Mode</p>
+              <div class="mode-switch">
+                <button type="button" class="theme-toggle" data-mode-option="light">亮色</button>
+                <button type="button" class="theme-toggle" data-mode-option="dark">暗色</button>
+              </div>
+            </div>
+            <div class="theme-group theme-group-colors theme-card">
+              <p class="theme-label">Theme</p>
+              <div class="theme-swatches">
+                <button type="button" class="theme-swatch" data-theme-option="red" aria-label="赤" title="赤"><span>赤</span></button>
+                <button type="button" class="theme-swatch" data-theme-option="orange" aria-label="橙" title="橙"><span>橙</span></button>
+                <button type="button" class="theme-swatch" data-theme-option="yellow" aria-label="黄" title="黄"><span>黄</span></button>
+                <button type="button" class="theme-swatch" data-theme-option="green" aria-label="绿" title="绿"><span>绿</span></button>
+                <button type="button" class="theme-swatch" data-theme-option="cyan" aria-label="青" title="青"><span>青</span></button>
+                <button type="button" class="theme-swatch" data-theme-option="blue" aria-label="蓝" title="蓝"><span>蓝</span></button>
+                <button type="button" class="theme-swatch" data-theme-option="purple" aria-label="紫" title="紫"><span>紫</span></button>
+                <button type="button" class="theme-swatch" data-theme-option="graphite" aria-label="石墨" title="石墨"><span>石</span></button>
+              </div>
+            </div>
+          </section>
+        </details>
+      </div>
     </header>
+
     <div id="status-toast" class="status-toast hidden" aria-live="polite"></div>
 
-    <section class="theme-panel panel" aria-label="主题设置">
-      <div class="theme-group">
-        <p class="theme-label">Mode</p>
-        <div class="mode-switch">
-          <button type="button" class="theme-toggle" data-mode-option="light">亮色</button>
-          <button type="button" class="theme-toggle" data-mode-option="dark">暗色</button>
+    <section class="panel chart-panel">
+      <div class="section-head chart-head">
+        <div>
+          <p class="section-kicker">Trend</p>
+          <h2>WPM 变化</h2>
         </div>
+        <p id="trend-caption" class="section-note">显示当前轮次的历史 WPM 变化</p>
       </div>
-      <div class="theme-group theme-group-colors">
-        <p class="theme-label">Theme</p>
-        <div class="theme-swatches">
-          <button type="button" class="theme-swatch" data-theme-option="red" aria-label="赤" title="赤"><span>赤</span></button>
-          <button type="button" class="theme-swatch" data-theme-option="orange" aria-label="橙" title="橙"><span>橙</span></button>
-          <button type="button" class="theme-swatch" data-theme-option="yellow" aria-label="黄" title="黄"><span>黄</span></button>
-          <button type="button" class="theme-swatch" data-theme-option="green" aria-label="绿" title="绿"><span>绿</span></button>
-          <button type="button" class="theme-swatch" data-theme-option="cyan" aria-label="青" title="青"><span>青</span></button>
-          <button type="button" class="theme-swatch" data-theme-option="blue" aria-label="蓝" title="蓝"><span>蓝</span></button>
-          <button type="button" class="theme-swatch" data-theme-option="purple" aria-label="紫" title="紫"><span>紫</span></button>
-          <button type="button" class="theme-swatch" data-theme-option="graphite" aria-label="石墨" title="石墨"><span>石</span></button>
-        </div>
-      </div>
+      <div id="chart-empty" class="chart-empty hidden">至少需要 1 条记录才能显示趋势。</div>
+      <svg id="trend-chart" class="trend-chart" viewBox="0 0 640 220" preserveAspectRatio="none" aria-label="WPM 趋势图"></svg>
     </section>
 
-    <section class="attempt-switch" aria-label="轮次切换">
-      <button type="button" class="attempt-tab active" data-attempt-tab="第一遍">第一遍</button>
-      <button type="button" class="attempt-tab" data-attempt-tab="第二遍">第二遍</button>
-      <button type="button" class="attempt-tab" data-attempt-tab="第三遍">第三遍</button>
+    <section class="results-bar">
+      <section class="stats-grid">
+        <article class="panel stat-card">
+          <p>最近 7 次平均 WPM</p>
+          <strong id="avg-wpm">0</strong>
+        </article>
+        <article class="panel stat-card">
+          <p>本轮记录数</p>
+          <strong id="record-count">0</strong>
+        </article>
+        <article class="panel stat-card">
+          <p>当前轮次</p>
+          <strong id="active-attempt-label">第一遍</strong>
+        </article>
+      </section>
+
+      <section class="attempt-switch" aria-label="轮次切换">
+        <button type="button" class="attempt-tab active" data-attempt-tab="第一遍">第一遍</button>
+        <button type="button" class="attempt-tab" data-attempt-tab="第二遍">第二遍</button>
+        <button type="button" class="attempt-tab" data-attempt-tab="第三遍">第三遍</button>
+      </section>
     </section>
 
     <section class="panel input-panel">
@@ -123,33 +163,6 @@
           <button id="submit-button" type="submit" class="primary-btn" disabled>保存本次记录</button>
         </div>
       </form>
-    </section>
-
-    <section class="stats-grid">
-      <article class="panel stat-card">
-        <p>当前轮次</p>
-        <strong id="active-attempt-label">第一遍</strong>
-      </article>
-      <article class="panel stat-card">
-        <p>最近 7 次平均 WPM</p>
-        <strong id="avg-wpm">0</strong>
-      </article>
-      <article class="panel stat-card">
-        <p>本轮记录数</p>
-        <strong id="record-count">0</strong>
-      </article>
-    </section>
-
-    <section class="panel chart-panel">
-      <div class="section-head">
-        <div>
-          <p class="section-kicker">Trend</p>
-          <h2>WPM 变化</h2>
-        </div>
-        <p id="trend-caption" class="section-note">显示当前轮次的历史 WPM 变化</p>
-      </div>
-      <div id="chart-empty" class="chart-empty hidden">至少需要 1 条记录才能显示趋势。</div>
-      <svg id="trend-chart" class="trend-chart" viewBox="0 0 640 220" preserveAspectRatio="none" aria-label="WPM 趋势图"></svg>
     </section>
 
     <section class="panel history-panel">
