@@ -1,4 +1,4 @@
-const CACHE_NAME = "wpm-reading-cache-v1";
+const CACHE_NAME = "wpm-reading-cache-v2";
 const APP_ASSETS = [
   "./",
   "./index.html",
