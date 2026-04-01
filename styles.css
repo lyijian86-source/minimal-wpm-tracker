@@ -487,15 +487,27 @@ body::before {
   font-size: 0.84rem;
 }
 
+.attempt-bar {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
 .attempt-switch {
-  display: inline-grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  width: fit-content;
+  width: 100%;
   padding: 6px;
   background: var(--panel-soft);
   border: 1px solid var(--border);
   border-radius: 16px;
+}
+
+.attempt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .attempt-tab {
@@ -979,7 +991,6 @@ body::before {
 
   .mode-switch,
   .theme-swatches,
-  .attempt-switch,
   .time-mode-switch,
   .timer-actions {
     width: 100%;

@@ -98,14 +98,16 @@
         </article>
         <article class="panel stat-card">
           <p>当前轮次</p>
-          <strong id="active-attempt-label">第一遍</strong>
+          <strong id="active-attempt-label">第一轮</strong>
         </article>
       </section>
 
-      <section class="attempt-switch" aria-label="轮次切换">
-        <button type="button" class="attempt-tab active" data-attempt-tab="第一遍">第一遍</button>
-        <button type="button" class="attempt-tab" data-attempt-tab="第二遍">第二遍</button>
-        <button type="button" class="attempt-tab" data-attempt-tab="第三遍">第三遍</button>
+      <section class="attempt-bar" aria-label="轮次切换">
+        <div id="attempt-switch" class="attempt-switch"></div>
+        <div class="attempt-actions">
+          <button id="add-attempt-button" type="button" class="subtle-btn">新增轮次</button>
+          <button id="remove-attempt-button" type="button" class="subtle-btn">删除当前轮</button>
+        </div>
       </section>
     </section>
 
@@ -123,11 +125,7 @@
 
           <label class="field">
             <span>记录轮次</span>
-            <select id="attempt" name="attempt">
-              <option value="第一遍">第一遍</option>
-              <option value="第二遍">第二遍</option>
-              <option value="第三遍">第三遍</option>
-            </select>
+            <select id="attempt" name="attempt"></select>
           </label>
 
           <div class="time-block">

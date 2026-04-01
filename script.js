@@ -1,8 +1,18 @@
 const STORAGE_KEY = "wpm-reading-records";
 const TRASH_STORAGE_KEY = "wpm-reading-trash";
+const ATTEMPTS_STORAGE_KEY = "wpm-reading-attempts";
 const THEME_MODE_KEY = "wpm-theme-mode";
 const THEME_COLOR_KEY = "wpm-theme-color";
-const ATTEMPTS = ["第一遍", "第二遍", "第三遍"];
+const DEFAULT_ATTEMPTS = ["\u7b2c\u4e00\u8f6e", "\u7b2c\u4e8c\u8f6e", "\u7b2c\u4e09\u8f6e"];
+const ATTEMPT_LABELS = [
+  "\u7b2c\u4e00\u8f6e",
+  "\u7b2c\u4e8c\u8f6e",
+  "\u7b2c\u4e09\u8f6e",
+  "\u7b2c\u56db\u8f6e",
+  "\u7b2c\u4e94\u8f6e",
+  "\u7b2c\u516d\u8f6e"
+];
+const MAX_ATTEMPTS = 6;
 const THEME_MODES = ["light", "dark"];
 const THEME_COLORS = ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "graphite"];
 
@@ -47,12 +57,15 @@ const installAppButton = document.getElementById("install-app-button");
 const installAppCopy = document.getElementById("install-app-copy");
 const statusToast = document.getElementById("status-toast");
 const itemTemplate = document.getElementById("record-item-template");
-const attemptTabs = document.querySelectorAll("[data-attempt-tab]");
+const attemptSwitch = document.getElementById("attempt-switch");
+const addAttemptButton = document.getElementById("add-attempt-button");
+const removeAttemptButton = document.getElementById("remove-attempt-button");
 
 let records = loadRecords();
 let trashRecords = loadTrashRecords();
+let attempts = loadAttempts(records, trashRecords);
 let deletedSnapshot = null;
-let activeAttempt = ATTEMPTS.includes(records[0]?.attempt) ? records[0].attempt : ATTEMPTS[0];
+let activeAttempt = attempts.includes(records[0]?.attempt) ? records[0].attempt : attempts[0];
 let toastTimer = null;
 let timeMode = "manual";
 let timerStartAt = 0;
@@ -77,13 +90,20 @@ attemptInput.addEventListener("change", () => {
   render();
 });
 
-attemptTabs.forEach((button) => {
-  button.addEventListener("click", () => {
-    activeAttempt = button.dataset.attemptTab;
-    attemptInput.value = activeAttempt;
-    render();
-  });
+attemptSwitch.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-attempt-tab]");
+
+  if (!button) {
+    return;
+  }
+
+  activeAttempt = button.dataset.attemptTab;
+  attemptInput.value = activeAttempt;
+  render();
 });
+
+addAttemptButton.addEventListener("click", addAttempt);
+removeAttemptButton.addEventListener("click", removeAttempt);
 
 modeToggleButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -389,6 +409,50 @@ function isCountableWord(token) {
   return /^[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*$/.test(token);
 }
 
+function normalizeAttempt(attempt) {
+  if (typeof attempt !== "string") {
+    return DEFAULT_ATTEMPTS[0];
+  }
+
+  const normalized = attempt.trim().replace(/\u904d/g, "\u8f6e");
+  return ATTEMPT_LABELS.includes(normalized) ? normalized : DEFAULT_ATTEMPTS[0];
+}
+
+function sanitizeAttemptList(source) {
+  if (!Array.isArray(source)) {
+    return [];
+  }
+
+  const seen = new Set(
+    source
+      .map((attempt) => normalizeAttempt(attempt))
+      .filter((attempt) => ATTEMPT_LABELS.includes(attempt))
+  );
+
+  return ATTEMPT_LABELS.filter((attempt) => seen.has(attempt)).slice(0, MAX_ATTEMPTS);
+}
+
+function ensureAttemptsForData(currentAttempts, sourceRecords = [], sourceTrashRecords = []) {
+  const baseAttempts = sanitizeAttemptList(currentAttempts);
+  const attemptsWithFallback = baseAttempts.length ? [...baseAttempts] : DEFAULT_ATTEMPTS.slice();
+  const usedAttempts = [...sourceRecords, ...sourceTrashRecords]
+    .map((record) => normalizeAttempt(record.attempt))
+    .filter((attempt) => ATTEMPT_LABELS.includes(attempt));
+
+  usedAttempts.forEach((attempt) => {
+    if (!attemptsWithFallback.includes(attempt) && attemptsWithFallback.length < MAX_ATTEMPTS) {
+      attemptsWithFallback.push(attempt);
+    }
+  });
+
+  return attemptsWithFallback;
+}
+
+function hasDataForAttempt(attempt) {
+  return records.some((record) => record.attempt === attempt)
+    || trashRecords.some((record) => record.attempt === attempt);
+}
+
 function loadRecords() {
   if (!localStorage.getItem(STORAGE_KEY)) {
     const seeded = createSeedRecords();
@@ -400,7 +464,7 @@ function loadRecords() {
 
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return sanitizeImportedRecords(parsed);
   } catch {
     return [];
   }
@@ -415,10 +479,31 @@ function loadTrashRecords() {
 
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return sanitizeTrashRecords(parsed);
   } catch {
     return [];
   }
+}
+
+function loadAttempts(sourceRecords = [], sourceTrashRecords = []) {
+  const raw = localStorage.getItem(ATTEMPTS_STORAGE_KEY);
+  let stored = [];
+
+  if (raw) {
+    try {
+      stored = sanitizeAttemptList(JSON.parse(raw));
+    } catch {
+      stored = [];
+    }
+  }
+
+  const withRecords = ensureAttemptsForData(stored.length ? stored : DEFAULT_ATTEMPTS.slice(), sourceRecords, sourceTrashRecords);
+
+  if (withRecords.length === 0) {
+    return DEFAULT_ATTEMPTS.slice();
+  }
+
+  return withRecords;
 }
 
 function saveRecords() {
@@ -429,7 +514,14 @@ function saveTrashRecords() {
   localStorage.setItem(TRASH_STORAGE_KEY, JSON.stringify(trashRecords));
 }
 
+function saveAttempts() {
+  localStorage.setItem(ATTEMPTS_STORAGE_KEY, JSON.stringify(attempts));
+}
+
 function render() {
+  attempts = ensureAttemptsForData(attempts, records, trashRecords);
+  activeAttempt = attempts.includes(activeAttempt) ? activeAttempt : attempts[0];
+  saveAttempts();
   syncAttemptControls();
   renderStats();
   renderTrend();
@@ -439,12 +531,72 @@ function render() {
 }
 
 function syncAttemptControls() {
+  attemptSwitch.innerHTML = "";
+  attemptInput.innerHTML = "";
   activeAttemptLabel.textContent = activeAttempt;
-  attemptInput.value = activeAttempt;
 
-  attemptTabs.forEach((button) => {
-    button.classList.toggle("active", button.dataset.attemptTab === activeAttempt);
+  attempts.forEach((attempt) => {
+    const option = document.createElement("option");
+    option.value = attempt;
+    option.textContent = attempt;
+    attemptInput.appendChild(option);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "attempt-tab";
+    button.dataset.attemptTab = attempt;
+    button.textContent = attempt;
+    button.classList.toggle("active", attempt === activeAttempt);
+    attemptSwitch.appendChild(button);
   });
+
+  attemptInput.value = activeAttempt;
+  addAttemptButton.disabled = attempts.length >= MAX_ATTEMPTS;
+  removeAttemptButton.disabled = attempts.length <= 1;
+}
+
+function addAttempt() {
+  if (attempts.length >= MAX_ATTEMPTS) {
+    showStatusToast("\u6700\u591a\u53ea\u80fd\u521b\u5efa 6 \u8f6e");
+    return;
+  }
+
+  const nextAttempt = ATTEMPT_LABELS.find((attempt) => !attempts.includes(attempt));
+
+  if (!nextAttempt) {
+    showStatusToast("\u65e0\u6cd5\u518d\u65b0\u589e\u8f6e\u6b21");
+    return;
+  }
+
+  attempts = [...attempts, nextAttempt];
+  activeAttempt = nextAttempt;
+  saveAttempts();
+  render();
+  showStatusToast(`\u5df2\u65b0\u589e ${nextAttempt}`);
+}
+
+function removeAttempt() {
+  if (attempts.length <= 1) {
+    showStatusToast("\u81f3\u5c11\u9700\u4fdd\u7559 1 \u8f6e");
+    return;
+  }
+
+  if (activeAttempt !== attempts.at(-1)) {
+    showStatusToast("\u4e3a\u4e86\u4fdd\u6301\u8f6e\u6b21\u987a\u5e8f\uff0c\u53ea\u80fd\u5220\u9664\u6700\u540e\u4e00\u8f6e");
+    return;
+  }
+
+  if (hasDataForAttempt(activeAttempt)) {
+    showStatusToast("\u5f53\u524d\u8f6e\u6b21\u8fd8\u6709\u8bb0\u5f55\u6216\u56de\u6536\u7ad9\u6570\u636e\uff0c\u8bf7\u5148\u6e05\u7406");
+    return;
+  }
+
+  const currentIndex = attempts.indexOf(activeAttempt);
+  attempts = attempts.filter((attempt) => attempt !== activeAttempt);
+  activeAttempt = attempts[Math.max(0, currentIndex - 1)] || attempts[0];
+  saveAttempts();
+  render();
+  showStatusToast("\u5df2\u5220\u9664\u5f53\u524d\u8f6e");
 }
 
 function getAttemptRecords() {
@@ -674,6 +826,7 @@ function restoreTrashRecord(id) {
 
   const [restoredRecord] = trashRecords.splice(index, 1);
   const { deletedAt, ...cleanRecord } = restoredRecord;
+  cleanRecord.attempt = normalizeAttempt(cleanRecord.attempt);
   records.unshift(cleanRecord);
   records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   saveRecords();
@@ -687,7 +840,10 @@ function restoreAllTrash() {
     return;
   }
 
-  const restored = trashRecords.map(({ deletedAt, ...record }) => record);
+  const restored = trashRecords.map(({ deletedAt, ...record }) => ({
+    ...record,
+    attempt: normalizeAttempt(record.attempt)
+  }));
   records = [...restored, ...records].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   trashRecords = [];
   saveRecords();
@@ -712,6 +868,7 @@ function exportRecords() {
   const payload = {
     version: 1,
     exportedAt: new Date().toISOString(),
+    attempts,
     records,
     trashRecords
   };
@@ -741,6 +898,7 @@ async function importRecords(event) {
     const parsed = JSON.parse(text);
     const sourceRecords = Array.isArray(parsed) ? parsed : parsed.records;
     const sourceTrashRecords = Array.isArray(parsed?.trashRecords) ? parsed.trashRecords : [];
+    const sourceAttempts = sanitizeAttemptList(parsed?.attempts);
     const importedRecords = sanitizeImportedRecords(sourceRecords);
     const importedTrashRecords = sanitizeTrashRecords(sourceTrashRecords);
 
@@ -773,8 +931,10 @@ async function importRecords(event) {
 
     records = mergedRecords.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     trashRecords = mergedTrash.sort((a, b) => new Date(b.deletedAt || b.createdAt) - new Date(a.deletedAt || a.createdAt));
+    attempts = ensureAttemptsForData([...attempts, ...sourceAttempts], records, trashRecords);
     saveRecords();
     saveTrashRecords();
+    saveAttempts();
     render();
     showStatusToast(addedCount > 0 ? `已导入 ${addedCount} 条记录` : "没有新增记录");
   } catch {
@@ -793,7 +953,7 @@ function sanitizeImportedRecords(sourceRecords) {
     .filter((record) => record && typeof record === "object")
     .map((record) => ({
       id: typeof record.id === "string" && record.id ? record.id : crypto.randomUUID(),
-      attempt: ATTEMPTS.includes(record.attempt) ? record.attempt : ATTEMPTS[0],
+      attempt: normalizeAttempt(record.attempt),
       words: Number(record.words),
       wpm: Number(record.wpm),
       durationSeconds: Number(record.durationSeconds),
@@ -949,30 +1109,30 @@ function formatDuration(totalSeconds) {
 
 function createSeedRecords() {
   return [
-    createSeedRecord("第一遍", 228, 820, 216, "2026-03-12T08:10:00.000Z"),
-    createSeedRecord("第一遍", 241, 840, 209, "2026-03-14T08:25:00.000Z"),
-    createSeedRecord("第一遍", 259, 860, 199, "2026-03-16T08:40:00.000Z"),
-    createSeedRecord("第一遍", 278, 880, 190, "2026-03-18T08:55:00.000Z"),
-    createSeedRecord("第一遍", 301, 900, 179, "2026-03-20T09:10:00.000Z"),
-    createSeedRecord("第一遍", 326, 920, 169, "2026-03-23T09:05:00.000Z"),
-    createSeedRecord("第一遍", 354, 940, 159, "2026-03-26T08:50:00.000Z"),
-    createSeedRecord("第一遍", 389, 960, 148, "2026-03-29T08:35:00.000Z"),
-    createSeedRecord("第二遍", 276, 820, 178, "2026-03-12T18:20:00.000Z"),
-    createSeedRecord("第二遍", 296, 840, 170, "2026-03-14T18:35:00.000Z"),
-    createSeedRecord("第二遍", 321, 860, 161, "2026-03-16T18:50:00.000Z"),
-    createSeedRecord("第二遍", 349, 880, 151, "2026-03-18T19:05:00.000Z"),
-    createSeedRecord("第二遍", 381, 900, 142, "2026-03-20T19:20:00.000Z"),
-    createSeedRecord("第二遍", 416, 920, 133, "2026-03-23T19:10:00.000Z"),
-    createSeedRecord("第二遍", 454, 940, 124, "2026-03-26T18:55:00.000Z"),
-    createSeedRecord("第二遍", 498, 960, 116, "2026-03-29T18:40:00.000Z"),
-    createSeedRecord("第三遍", 332, 820, 148, "2026-03-13T07:30:00.000Z"),
-    createSeedRecord("第三遍", 358, 840, 141, "2026-03-15T07:42:00.000Z"),
-    createSeedRecord("第三遍", 389, 860, 133, "2026-03-17T07:54:00.000Z"),
-    createSeedRecord("第三遍", 425, 880, 124, "2026-03-19T08:06:00.000Z"),
-    createSeedRecord("第三遍", 466, 900, 116, "2026-03-21T08:18:00.000Z"),
-    createSeedRecord("第三遍", 512, 920, 108, "2026-03-24T08:10:00.000Z"),
-    createSeedRecord("第三遍", 563, 940, 100, "2026-03-27T07:58:00.000Z"),
-    createSeedRecord("第三遍", 621, 960, 93, "2026-03-30T07:45:00.000Z")
+    createSeedRecord(ATTEMPT_LABELS[0], 228, 820, 216, "2026-03-12T08:10:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[0], 241, 840, 209, "2026-03-14T08:25:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[0], 259, 860, 199, "2026-03-16T08:40:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[0], 278, 880, 190, "2026-03-18T08:55:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[0], 301, 900, 179, "2026-03-20T09:10:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[0], 326, 920, 169, "2026-03-23T09:05:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[0], 354, 940, 159, "2026-03-26T08:50:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[0], 389, 960, 148, "2026-03-29T08:35:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[1], 276, 820, 178, "2026-03-12T18:20:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[1], 296, 840, 170, "2026-03-14T18:35:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[1], 321, 860, 161, "2026-03-16T18:50:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[1], 349, 880, 151, "2026-03-18T19:05:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[1], 381, 900, 142, "2026-03-20T19:20:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[1], 416, 920, 133, "2026-03-23T19:10:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[1], 454, 940, 124, "2026-03-26T18:55:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[1], 498, 960, 116, "2026-03-29T18:40:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[2], 332, 820, 148, "2026-03-13T07:30:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[2], 358, 840, 141, "2026-03-15T07:42:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[2], 389, 860, 133, "2026-03-17T07:54:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[2], 425, 880, 124, "2026-03-19T08:06:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[2], 466, 900, 116, "2026-03-21T08:18:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[2], 512, 920, 108, "2026-03-24T08:10:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[2], 563, 940, 100, "2026-03-27T07:58:00.000Z"),
+    createSeedRecord(ATTEMPT_LABELS[2], 621, 960, 93, "2026-03-30T07:45:00.000Z")
   ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
