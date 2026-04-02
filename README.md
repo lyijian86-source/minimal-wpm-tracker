@@ -167,10 +167,10 @@
 
 ## 在线体验
 
-把这里替换成你的正式地址即可：
+正式地址：
 
 ```text
-https://your-site.pages.dev
+https://minimal-wpm-tracker.pages.dev/
 ```
 
 ## 技术实现
