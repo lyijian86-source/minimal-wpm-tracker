@@ -1025,7 +1025,7 @@ function registerOfflineSupport() {
 
         window.setTimeout(() => {
           registration.update().catch(() => {});
-        }, 1500);
+        }, 12000);
       }).catch(() => {
         // Keep silent. The app still works online if registration fails.
       });

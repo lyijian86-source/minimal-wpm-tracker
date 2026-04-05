@@ -128,7 +128,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+  font-family: "SF Pro Display", "PingFang SC", "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   background:
     radial-gradient(circle at 14% 16%, var(--ambient-1), transparent 26%),
     radial-gradient(circle at 86% 18%, var(--ambient-3), transparent 22%),
