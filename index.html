@@ -132,17 +132,17 @@
             <select id="attempt" name="attempt"></select>
           </label>
 
-          <div class="time-block">
-            <div class="time-mode-switch" aria-label="时间录入方式">
-              <button type="button" class="mode-btn active" data-time-mode="manual">手动输入</button>
-              <button type="button" class="mode-btn" data-time-mode="timer">自动计时</button>
-            </div>
-
-            <div id="timer-panel" class="timer-panel hidden">
-              <div class="timer-readout">
-                <p>计时器</p>
-                <strong id="timer-display">00:00</strong>
+            <div class="time-block">
+              <div class="time-mode-switch" aria-label="时间录入方式">
+                <button type="button" class="mode-btn active" data-time-mode="timer">自动计时</button>
+                <button type="button" class="mode-btn" data-time-mode="manual">手动输入</button>
               </div>
+
+              <div id="timer-panel" class="timer-panel">
+                <div class="timer-readout">
+                  <p>计时器</p>
+                  <strong id="timer-display">00:00</strong>
+                </div>
               <div class="timer-actions">
                 <button id="timer-start" type="button" class="subtle-btn timer-btn">开始</button>
                 <button id="timer-stop" type="button" class="subtle-btn timer-btn" disabled>暂停</button>
@@ -150,11 +150,11 @@
               </div>
             </div>
 
-            <div class="manual-time-grid">
-              <label class="field">
-                <span>分钟</span>
-                <input id="minutes" name="minutes" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
-              </label>
+              <div class="manual-time-grid hidden">
+                <label class="field">
+                  <span>分钟</span>
+                  <input id="minutes" name="minutes" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
+                </label>
 
               <label class="field">
                 <span>秒数</span>
