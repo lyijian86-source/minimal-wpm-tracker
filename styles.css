@@ -349,6 +349,12 @@ body::before {
   box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-soft) 20%, transparent);
 }
 
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
 .theme-group-colors {
   justify-items: end;
 }
